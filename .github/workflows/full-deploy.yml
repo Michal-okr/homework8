@@ -37,13 +37,10 @@ jobs:
           docker tag $ECR_REPO $ECR_REGISTRY/$ECR_REPO:latest
       - name: Push Docker image to ECR
         run: docker push $ECR_REGISTRY/$ECR_REPO:latest
-      - name: Redeploy ECS service (update image)
-        run: terraform apply -auto-approve
-        working-directory: terraform
       - name: Get Load Balancer URL
         id: lb_url
         run: |
-          LB_URL=$(terraform output -raw load_balancer_url)
+          LB_URL=$(terraform output -raw load_balancer_url | grep -Eo '^http.*')
           echo "url=$LB_URL" >> $GITHUB_OUTPUT
           echo "Load Balancer URL: $LB_URL"
         working-directory: terraform
