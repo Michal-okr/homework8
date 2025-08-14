@@ -1,0 +1,46 @@
+name: Build, Push Docker Image & Deploy Terraform
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: eu-central-1
+      ECR_REPO: homework8-nginx
+      ECR_REGISTRY: 538694382273.dkr.ecr.eu-central-1.amazonaws.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Create ECR repository (targeted apply)
+        run: terraform -chdir=terraform apply -auto-approve -target=aws_ecr_repository.homework8_nginx
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+        run: |
+          docker build -t $ECR_REPO .
+          docker tag $ECR_REPO $ECR_REGISTRY/$ECR_REPO:latest
+
+      - name: Push Docker image to ECR
+        run: docker push $ECR_REGISTRY/$ECR_REPO:latest
+
+      - name: Deploy full infrastructure with Terraform
+        run: terraform -chdir=terraform apply -auto-approve
