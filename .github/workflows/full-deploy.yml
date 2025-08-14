@@ -24,9 +24,11 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
       - name: Terraform Init
-        run: terraform -chdir=terraform init
+        run: terraform init
+        working-directory: terraform
       - name: Deploy infrastructure (create ECR, networking, ECS, ...)
-        run: terraform -chdir=terraform apply -auto-approve
+        run: terraform apply -auto-approve
+        working-directory: terraform
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
       - name: Build Docker image
@@ -36,21 +38,22 @@ jobs:
       - name: Push Docker image to ECR
         run: docker push $ECR_REGISTRY/$ECR_REPO:latest
       - name: Redeploy ECS service (update image)
-        run: terraform -chdir=terraform apply -auto-approve
+        run: terraform apply -auto-approve
+        working-directory: terraform
       - name: Get Load Balancer URL
         id: lb_url
         run: |
-          LB_URL=$(terraform -chdir=terraform output -raw load_balancer_url | grep '^http')
+          LB_URL=$(terraform output -raw load_balancer_url)
           echo "url=$LB_URL" >> $GITHUB_OUTPUT
           echo "Load Balancer URL: $LB_URL"
+        working-directory: terraform
       - name: Test Application
         run: |
           echo "Waiting for ECS service to be stable..."
           sleep 60
           echo "Testing application availability..."
-          echo "LB_URL from output: ${{ steps.lb_url.outputs.url }}"
           for i in {1..10}; do
-            if curl -v "${{ steps.lb_url.outputs.url }}"; then
+            if curl -f "${{ steps.lb_url.outputs.url }}"; then
               echo "Application is responding!"
               break
             else
@@ -58,6 +61,7 @@ jobs:
               sleep 30
             fi
           done
+        working-directory: terraform
 
   destroy:
     runs-on: ubuntu-latest
@@ -75,6 +79,8 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
       - name: Terraform Init
-        run: terraform -chdir=terraform init
+        run: terraform init
+        working-directory: terraform
       - name: Terraform Destroy
-        run: terraform -chdir=terraform destroy -auto-approve
+        run: terraform destroy -auto-approve
+        working-directory: terraform
