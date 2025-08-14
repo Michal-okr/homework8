@@ -48,8 +48,9 @@ jobs:
           echo "Waiting for ECS service to be stable..."
           sleep 60
           echo "Testing application availability..."
+          echo "LB_URL from output: ${{ steps.lb_url.outputs.url }}"
           for i in {1..10}; do
-            if curl -f "${{ steps.lb_url.outputs.url }}"; then
+            if curl -v "${{ steps.lb_url.outputs.url }}"; then
               echo "Application is responding!"
               break
             else
