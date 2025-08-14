@@ -40,7 +40,7 @@ jobs:
       - name: Get Load Balancer URL
         id: lb_url
         run: |
-          LB_URL=$(terraform -chdir=terraform output -raw load_balancer_url)
+          LB_URL=$(terraform -chdir=terraform output -raw load_balancer_url | grep '^http')
           echo "url=$LB_URL" >> $GITHUB_OUTPUT
           echo "Load Balancer URL: $LB_URL"
       - name: Test Application
