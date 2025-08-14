@@ -1,4 +1,5 @@
-name: Build, Push Docker Image & Deploy Terraform
+
+name: Full Deploy Pipeline
 
 on:
   push:
@@ -9,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AWS_REGION: eu-central-1
-      ECR_REPO: homework8-nginx
+      ECR_REPO: nginx-homework8
       ECR_REGISTRY: 538694382273.dkr.ecr.eu-central-1.amazonaws.com
     steps:
       - name: Checkout code
@@ -28,8 +29,8 @@ jobs:
       - name: Terraform Init
         run: terraform -chdir=terraform init
 
-      - name: Create ECR repository (targeted apply)
-        run: terraform -chdir=terraform apply -auto-approve -target=aws_ecr_repository.homework8_nginx
+      - name: Deploy infrastructure (create ECR, networking, ECS, ...)
+        run: terraform -chdir=terraform apply -auto-approve
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -42,5 +43,5 @@ jobs:
       - name: Push Docker image to ECR
         run: docker push $ECR_REGISTRY/$ECR_REPO:latest
 
-      - name: Deploy full infrastructure with Terraform
+      - name: Redeploy ECS service (update image)
         run: terraform -chdir=terraform apply -auto-approve

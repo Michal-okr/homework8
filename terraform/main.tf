@@ -17,8 +17,9 @@ provider "aws" {
 }
 
 # ECR repository
-resource "aws_ecr_repository" "homework8_nginx" {
-  name = "homework8-nginx"
+resource "aws_ecr_repository" "nginx_homework8" {
+  name = "nginx-homework8"
+  force_delete = true
 }
 
 # Data sources
@@ -189,7 +190,7 @@ resource "aws_ecs_task_definition" "nginx" {
   container_definitions = jsonencode([
     {
       name  = "nginx"
-      image = "${aws_ecr_repository.homework8_nginx.repository_url}:latest"
+  image = "${aws_ecr_repository.nginx_homework8.repository_url}:latest"
       portMappings = [
         {
           containerPort = 80
