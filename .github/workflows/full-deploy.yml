@@ -38,10 +38,9 @@ jobs:
       - name: Push Docker image to ECR
         run: docker push $ECR_REGISTRY/$ECR_REPO:latest
       - name: Get Load Balancer URL
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         id: lb_url
         run: |
-          LB_URL=$(terraform output -raw load_balancer_url)
+          LB_URL=$(terraform output -raw load_balancer_url | grep -m1 '^http')
           echo "url=$LB_URL" >> $GITHUB_OUTPUT
           echo "Load Balancer URL: $LB_URL"
         working-directory: terraform
